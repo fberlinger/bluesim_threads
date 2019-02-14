@@ -2,13 +2,31 @@
 
 BlueSim is a realistic three dimensional simulator to test ideas for collective behaviors with BlueBots.
 
+## Requirements
+
+- Python 3.6
+- Jupyter 1.0
+- Numpy
+- Scipy
+- Matplotlib
+- (PIP _not mandatory but recommended_)
+
+## Installation
+
+Either install Jupyter, Numpy, Scipy, and Matplotlib via PIP:
+
+```
+git clone https://code.harvard.edu/flb979/FISH && cd FISH
+pip install -r ./requirements.txt
+```
+
+Or manually via https://jupyter.org/install and https://scipy.org/install.html
+
 ## Additional Requirement if Animations are Desired
 
 - ipyvolume
 
-## Installation
-
-Manually following instructions on https://github.com/maartenbreddels/ipyvolume.
+Installation: Manually following instructions on https://github.com/maartenbreddels/ipyvolume.
 
 ## Upload Code for an Experiment on the Virtual BlueBots
 
