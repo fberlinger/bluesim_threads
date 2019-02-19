@@ -68,6 +68,8 @@ class Fish():
         channel,
         interaction,
         dynamics,
+        w_blindspot=50,
+        r_blocking=65,
         target_dist=390,
         lim_neighbors=[0, math.inf],
         fish_max_speed=1,
@@ -102,6 +104,8 @@ class Fish():
         self.channel = channel
         self.interaction = interaction
         self.dynamics = dynamics
+        self.w_blindspot = w_blindspot
+        self.r_blocking = r_blocking
         self.target_dist = target_dist
         self.neighbor_weight = neighbor_weight
         self.lim_neighbors = lim_neighbors

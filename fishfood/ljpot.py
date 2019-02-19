@@ -1,3 +1,5 @@
+"""Summary
+"""
 import math
 import numpy as np
 from queue import Queue
@@ -527,7 +529,7 @@ class Fish():
             self.pect_r = 0
 
             if heading < caudal_range:
-                self.caudal = min(1, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
 
@@ -537,7 +539,7 @@ class Fish():
             self.pect_l = 0
 
             if heading > -caudal_range:
-                self.caudal = min(1, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
 
@@ -631,11 +633,11 @@ class Fish():
         """
 
         # Get the centroid of the swarm
-        centroid_pos = np.zeros((3,))
+        #centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
         centroid_pos = self.lj_force(neighbors, rel_pos)
-        #centroid_pos = -self.comp_center(rel_pos)
+        #self.d_center = np.linalg.norm(self.comp_center(rel_pos))
 
         move = self.target_pos + centroid_pos
 
@@ -643,7 +645,7 @@ class Fish():
         r_T_g = self.interaction.rot_global_to_robot(self.id)
         r_move_g = r_T_g @ move
 
-        # Simulate dynamics and restrict movement
+
         self.depth_ctrl(r_move_g)
         self.home(r_move_g)
 
@@ -713,16 +715,8 @@ class Fish():
 
         if self.clock > 1:
             # Move around (or just stay where you are)
-            self.d_center = np.linalg.norm(self.comp_center(rel_pos)) # mean neighbor distance
-
-            no_neighbors_before = len(neighbors)
             self.interaction.blind_spot(self.id, neighbors, rel_pos)
-            no_neighbors_blind = len(neighbors)
-            self.interaction.occlude(self.id, neighbors, rel_pos, self.r_blocking)
-            no_neighbors_blocking = len(neighbors)
-            if self.id == 5:
-                #print('fish #5 sees {} neighbors before blindspot and {} after in current iteration'.format(no_neighbors_before, no_neighbors_blind))
-                print('fish #5 sees {} neighbors before blocking sphere and {} after in current iteration'.format(no_neighbors_blind, no_neighbors_blocking))
+            self.interaction.occlude(self.id, neighbors, rel_pos)
             self.interaction.move(self.id, self.move(neighbors, rel_pos))
 
         # Update behavior based on status and information - update behavior
