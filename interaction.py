@@ -91,8 +91,6 @@ class Interaction():
 
     def see_circlers(self, source_id, neighbors, rel_pos, sensing_angle):
         g_vel = self.environment.node_vel[source_id]
-        #r_T_g = self.rot_global_to_robot(source_id)
-        #r_vel = r_T_g @ g_vel
 
         candidates = neighbors.copy()
         for neighbor in candidates:
@@ -120,16 +118,12 @@ class Interaction():
         r_blockage = w_blindspot/2
 
         g_vel = self.environment.node_vel[source_id]
-        r_T_g = self.rot_global_to_robot(source_id)
-        r_vel = r_T_g @ g_vel
-
-        #r_vel = self.environment.node_vel[source_id]
 
         candidates = neighbors.copy()
         for neighbor in candidates:
-            dot = np.dot(r_vel[:2], rel_pos[neighbor][:2])
+            dot = np.dot(g_vel[:2], rel_pos[neighbor][:2])
             if dot < 0:
-                mag_vel = max(0.001, np.linalg.norm(r_vel[:2]))
+                mag_vel = max(0.001, np.linalg.norm(g_vel[:2]))
                 dist_neighbor = max(0.001, np.linalg.norm(rel_pos[neighbor][:2]))
 
                 angle = abs(math.acos(dot / (mag_vel * dist_neighbor))) - math.pi / 2 # cos(a-b) = ca*cb+sa*sb = sa

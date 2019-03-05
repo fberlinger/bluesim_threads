@@ -636,6 +636,7 @@ class Fish():
         # Get the relative direction to the centroid of the swarm
         centroid_pos = self.lj_force(neighbors, rel_pos)
         #centroid_pos = -self.comp_center(rel_pos)
+        self.d_center = np.linalg.norm(self.comp_center(rel_pos)) # needed for dispersion eval with blindspot
 
         move = self.target_pos + centroid_pos
 

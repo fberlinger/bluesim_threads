@@ -615,26 +615,6 @@ class Fish():
                 self.pect_l = 0
                 self.pect_r = 0
 
-    def circling(self, neighbors, rel_pos):
-        sensing_angle = 45 #deg
-
-        if not neighbors:
-            self.pect_l = 0
-            self.pect_r = 0.5
-            self.caudal = 0.1
-            return
-        
-        someone = self.interaction.see_circlers(self.id, neighbors, rel_pos, sensing_angle)
-
-        if someone:
-            self.pect_r = 0
-            self.pect_l = 0.5
-            self.caudal = 0.1
-        else:
-            self.pect_l = 0
-            self.pect_r = 0.5
-            self.caudal = 0.1
-
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
 
@@ -653,26 +633,59 @@ class Fish():
         """
 
         # Get the centroid of the swarm
-        #centroid_pos = np.zeros((3,))
+        centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
         #centroid_pos = self.lj_force(neighbors, rel_pos)
         #self.d_center = np.linalg.norm(self.comp_center(rel_pos))
 
-        #move = self.target_pos + centroid_pos
+        move = self.target_pos# + centroid_pos
 
         # Global to Robot Transformation
-        #r_T_g = self.interaction.rot_global_to_robot(self.id)
-        #r_move_g = r_T_g @ move
+        r_T_g = self.interaction.rot_global_to_robot(self.id)
+        r_move_g = r_T_g @ move
 
+        #obstacle_avoidance = r_T_g @ centroid_pos
 
-        #self.depth_ctrl(r_move_g)
+        # Simulate dynamics and restrict movement #xx
+        self.depth_ctrl(r_move_g)
+        #self.depth_waltz(r_move_g)
         #self.home(r_move_g)
-        self.circling(neighbors, rel_pos)
+
+        # Orbiting
+        #################################################
+        target_dist = 500
+
+        if self.behavior == 'home':
+            dist_filtered = np.linalg.norm(r_move_g)
+            if dist_filtered < target_dist * 1.6:
+                self.behavior = 'transition'
+            else:
+                self.home(r_move_g)
+        elif self.behavior == 'transition':
+            self.transition(r_move_g)
+        elif self.behavior == 'orbit':
+            self.orbit(r_move_g, target_dist)
+        # Orbiting
+        #################################################
+
+        #self.collisions(obstacle_avoidance)
 
         self.dynamics.update_ctrl(self.dorsal, self.caudal, self.pect_r, self.pect_l)
         final_move = self.dynamics.simulate_move(self.id)
 
+        # Cap the length of the move (OLD SIMULATOR)
+        # magnitude = np.linalg.norm(move)
+        # if magnitude > 0:
+        #     direction = move / magnitude
+        #     final_move = direction * min(magnitude, self.fish_max_speed)
+        # else:
+        #     final_move = move
+
+        # if self.verbose:
+        #     print('Fish #{}: move to {}'.format(self.id, final_move))
+
+        #print(final_move)
         return final_move
 
     def update_behavior(self):
