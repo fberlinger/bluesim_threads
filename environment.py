@@ -26,7 +26,7 @@ class Environment():
         prob_type='quadratic',
         conn_thres=math.inf,
         conn_drop=1,
-        noise_magnitude=0.1,
+        noise_magnitude=1,
         verbose=False
     ):
         """Create a new environment for the fish

@@ -82,6 +82,7 @@ class Observer():
         self.vz = []
         self.v_mean = []
         self.d_mean = []
+        self.d_mean_indv = [[] for n in range(self.num_nodes)]
         self.c = []
         self.status = []
         self.reset = False
@@ -383,10 +384,11 @@ class Observer():
             self.vy[i].append(self.environment.node_vel[i, 1])
 
             # fish should be neutral pitch in animations > vz = 0
-            #self.vz[i].append(self.environment.node_vel[i, 2])
-            self.vz[i].append(0)
+            self.vz[i].append(self.environment.node_vel[i, 2])
+            #self.vz[i].append(0)
 
             d_mean += self.fish[i].d_center
+            self.d_mean_indv[i].append(self.fish[i].d_center)
             #v_mean += math.sqrt(self.vx[i]**2 + self.vy[i]**2 + self.vz[i]**2)
 
             n = len(self.fish[i].neighbors)

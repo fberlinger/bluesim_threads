@@ -468,9 +468,9 @@ class Fish():
         a = 12 # 12
         b = 6 # 6
         epsilon = 100 # depth of potential well, V_LJ(r_target) = epsilon
-        gamma = 100 # force gain
+        gamma = 1 # force gain
         r_target = self.target_dist
-        r_const = r_target + 1 * self.body_length
+        r_const = r_target + 2 * self.body_length
 
         center = np.zeros((3,))
         n = len(neighbors)
@@ -481,8 +481,10 @@ class Fish():
             center += f_lj * rel_pos[neighbor]
 
         center /= n
+        magn = np.linalg.norm(center) # normalize
+        center /= magn # normalize
 
-        return center
+        return (center, magn)
 
     def depth_ctrl(self, r_move_g):
         """Controls diving depth based on direction of desired move.
@@ -490,11 +492,13 @@ class Fish():
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
         """
+        pitch_range = 2 # abs(pitch) below which dorsal fin is not controlled
+
         pitch = np.arctan2(r_move_g[2], math.sqrt(r_move_g[0]**2 + r_move_g[1]**2)) * 180 / math.pi
 
-        if pitch > 1:
+        if pitch > pitch_range:
             self.dorsal = 1
-        elif pitch < -1:
+        elif pitch < -pitch_range:
             self.dorsal = 0
 
     def depth_waltz(self, r_move_g):
@@ -513,33 +517,48 @@ class Fish():
         else:
             self.dorsal = 1
 
-    def home(self, r_move_g):
+    def home(self, r_move_g, magnitude):
         """Homing behavior. Sets fin controls to move toward a desired goal location.
 
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
         """
-        caudal_range = 20 # abs(heading) below which caudal fin is switched on
+        caudal_range = 35 # abs(heading) below which caudal fin is switched on
+        freq_c = min(0.5 + 1/250 * magnitude, 1)
 
         heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
 
+        # target behind
+        if heading > 155 or heading < -155:
+            self.caudal = 0
+            self.pect_r = 1.5
+            self.pect_l = 1.5
+
+        # target in front
+        elif heading < 10 and heading > -10:
+            self.pect_r = 0
+            self.pect_l = 0
+            self.caudal = freq_c
+
         # target to the right
-        if heading > 0:
-            self.pect_l = min(1, 0.6 + abs(heading) / 180)
+        elif heading > 10:
+            freq_l = 0.5 + 1 * abs(heading) / 155
+            self.pect_l = freq_l
             self.pect_r = 0
 
             if heading < caudal_range:
-                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+                self.caudal = freq_c
             else:
                 self.caudal = 0
 
         # target to the left
-        else:
-            self.pect_r = min(1, 0.6 + abs(heading) / 180)
+        elif heading < -10:
+            freq_r = 0.5 + 1 * abs(heading) / 155
+            self.pect_r = freq_r
             self.pect_l = 0
 
             if heading > -caudal_range:
-                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+                self.caudal = freq_c
             else:
                 self.caudal = 0
 
@@ -633,59 +652,25 @@ class Fish():
         """
 
         # Get the centroid of the swarm
-        centroid_pos = np.zeros((3,))
+        #centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
-        #centroid_pos = self.lj_force(neighbors, rel_pos)
-        #self.d_center = np.linalg.norm(self.comp_center(rel_pos))
+        centroid_pos, magnitude = self.lj_force(neighbors, rel_pos)
+        self.d_center = np.linalg.norm(self.comp_center(rel_pos))
 
-        move = self.target_pos# + centroid_pos
+        move = self.target_pos + centroid_pos
 
         # Global to Robot Transformation
         r_T_g = self.interaction.rot_global_to_robot(self.id)
         r_move_g = r_T_g @ move
 
-        #obstacle_avoidance = r_T_g @ centroid_pos
 
-        # Simulate dynamics and restrict movement #xx
         self.depth_ctrl(r_move_g)
-        #self.depth_waltz(r_move_g)
-        #self.home(r_move_g)
-
-        # Orbiting
-        #################################################
-        target_dist = 500
-
-        if self.behavior == 'home':
-            dist_filtered = np.linalg.norm(r_move_g)
-            if dist_filtered < target_dist * 1.6:
-                self.behavior = 'transition'
-            else:
-                self.home(r_move_g)
-        elif self.behavior == 'transition':
-            self.transition(r_move_g)
-        elif self.behavior == 'orbit':
-            self.orbit(r_move_g, target_dist)
-        # Orbiting
-        #################################################
-
-        #self.collisions(obstacle_avoidance)
+        self.home(r_move_g, magnitude)
 
         self.dynamics.update_ctrl(self.dorsal, self.caudal, self.pect_r, self.pect_l)
         final_move = self.dynamics.simulate_move(self.id)
 
-        # Cap the length of the move (OLD SIMULATOR)
-        # magnitude = np.linalg.norm(move)
-        # if magnitude > 0:
-        #     direction = move / magnitude
-        #     final_move = direction * min(magnitude, self.fish_max_speed)
-        # else:
-        #     final_move = move
-
-        # if self.verbose:
-        #     print('Fish #{}: move to {}'.format(self.id, final_move))
-
-        #print(final_move)
         return final_move
 
     def update_behavior(self):
