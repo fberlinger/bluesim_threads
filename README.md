@@ -2,6 +2,8 @@
 
 BlueSim is a realistic three dimensional simulator to test ideas for collective behaviors with BlueBots.
 
+This is an initial thread-based implementation, which is no longer used. You might want to check out fastsim instead.
+
 ## Requirements
 
 - Python 3.6
